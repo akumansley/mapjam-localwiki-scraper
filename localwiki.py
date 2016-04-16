@@ -4,6 +4,7 @@ import pprint
 from collections import namedtuple
 from hashlib import sha1
 import os
+import csv
 
 Entry = namedtuple("Entry", ["lat", "lon", "name"])
 
@@ -49,3 +50,13 @@ for map_obj in map_objs['results']:
         entries.append(entry)
 
 pprint.pprint(entries)
+with open('out.csv', 'wb') as outfile:
+    fieldnames = ["Name", "Latitude", "Longitude"]
+    writer = csv.DictWriter(outfile, fieldnames=fieldnames, quoting=csv.QUOTE_MINIMAL)
+    writer.writeheader()
+    rows = [{
+        "Name": entry.name,
+        "Latitude": entry.lat,
+        "Longitude": entry.lon
+    } for entry in entries]
+    map(writer.writerow, rows)
