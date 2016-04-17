@@ -5,6 +5,7 @@ from collections import namedtuple
 from hashlib import sha1
 import os
 import csv
+import simplekml
 
 Entry = namedtuple("Entry", ["lat", "lon", "name"])
 
@@ -37,7 +38,7 @@ def load_cache_from_disk():
 load_cache_from_disk()
 
 BASE_URL = "https://localwiki.org/api/v4/"
-omj_path = "maps/?tags=oaklandmapjam"
+omj_path = "maps/?page__tags=oaklandmapjam&limit=100"
 map_objs = cached_get(BASE_URL + omj_path)
 entries = []
 for map_obj in map_objs['results']:
@@ -50,9 +51,10 @@ for map_obj in map_objs['results']:
         entries.append(entry)
 
 pprint.pprint(entries)
+print len(entries)
 with open('out.csv', 'wb') as outfile:
     fieldnames = ["Name", "Latitude", "Longitude"]
-    writer = csv.DictWriter(outfile, fieldnames=fieldnames, quoting=csv.QUOTE_MINIMAL)
+    writer = csv.DictWriter(outfile, fieldnames=fieldnames, quoting=csv.QUOTE_ALL)
     writer.writeheader()
     rows = [{
         "Name": entry.name,
@@ -60,3 +62,8 @@ with open('out.csv', 'wb') as outfile:
         "Longitude": entry.lon
     } for entry in entries]
     map(writer.writerow, rows)
+
+kml = simplekml.Kml()
+for entry in entries:
+    kml.newpoint(name=entry.name, coords=[(entry.lat,entry.lon)])
+kml.save("out.kml")
